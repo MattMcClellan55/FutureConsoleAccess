@@ -95,20 +95,40 @@ do
             Console.WriteLine("Please enter valid indexes.");
             continue;
         }
-        else if (!nodes[command[1].Trim('\"')].child.Any(c => c.text == command[2].Trim('\"')))
+        else if (!nodes[command[1].Trim('\"')].child.Any(c => c.key == command[2].Trim('\"')))
         {
             Console.WriteLine("There is no in-between to proxy from here.");
             continue;
         }
 
-        nodes[command[1].Trim('\"')].child.RemoveAll(p => p.text == command[2].Trim('\"'));
-        nodes[command[2].Trim('\"')].parent.RemoveAll(p => p.text == command[1].Trim('\"'));
+        nodes[command[1].Trim('\"')].child.RemoveAll(p => p.key == command[2].Trim('\"'));
+        nodes[command[2].Trim('\"')].parent.RemoveAll(p => p.key == command[1].Trim('\"'));
 
         nodes.Add(command[3].Trim('\"'), new Node(command[3].Trim('\"')));
         index = command[3].Trim('\"');
 
         ParentChildLink(nodes[command[1].Trim('\"')], nodes[command[3].Trim('\"')]);
         ParentChildLink(nodes[command[3].Trim('\"')], nodes[command[2].Trim('\"')]);
+    }
+    else if (string.Equals(command[0], "rename", StringComparison.OrdinalIgnoreCase))
+    {
+        if (command.Length != 3 || command[1][0] != '\"' || command[2][0] != '\"')
+        {
+            Console.WriteLine("Please enter a valid command.");
+            continue;
+        } 
+        else if (!nodes.ContainsKey(command[1].Trim('\"')) || nodes.ContainsKey(command[2].Trim('\"')))
+        {
+            Console.WriteLine("Please enter valid indexes.");
+            continue;
+        }
+
+        if (nodes.TryGetValue(command[1].Trim('\"'), out Node? value))
+        {
+            nodes.Remove(command[1].Trim('\"'));
+            nodes.Add(command[2].Trim('\"'), value);
+            if (index == command[1].Trim('\"')) index = command[2].Trim('\"');
+        }
     }
     else if (string.Equals(command[0], "remove", StringComparison.OrdinalIgnoreCase))
     {
@@ -129,19 +149,19 @@ do
 
         foreach (Node node in nodes.Values.ToList())
         {
-            node.parent.RemoveAll(p => p.text == command[1].Trim('\"'));
-            node.child.RemoveAll(c => c.text == command[1].Trim('\"'));
+            node.parent.RemoveAll(p => p.key == command[1].Trim('\"'));
+            node.child.RemoveAll(c => c.key == command[1].Trim('\"'));
         }
     }
     else if (string.Equals(command[0], "summarize", StringComparison.OrdinalIgnoreCase))
     {
         foreach (Node node in nodes.Values.ToList())
         {
-            if (node.parent.Count == 0 && node.child.Count == 0) Console.WriteLine(node.text);
+            if (node.parent.Count == 0 && node.child.Count == 0) Console.WriteLine(node.key);
 
             foreach (Node child in node.child)
             {
-                Console.WriteLine($"{node.text} -> {child.text}");
+                Console.WriteLine($"{node.key} -> {child.key}");
             }
         }
     }
@@ -157,15 +177,17 @@ static void ParentChildLink(Node parent, Node child)
     child.parent.Add(parent);
 }
 
-public struct Node
+public class Node
 {
     public List<Node> parent; 
     public List<Node> child;
-    public string text;
+    public string key;
+    public string value;
 
-    public Node(string text)
+    public Node(string key)
     {
-        this.text = text;
+        this.key = key;
+        this.value = string.Empty;
         this.parent = new List<Node>();
         this.child = new List<Node>();
     }
