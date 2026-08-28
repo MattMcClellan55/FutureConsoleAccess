@@ -95,14 +95,14 @@ do
             Console.WriteLine("Please enter valid indexes.");
             continue;
         }
-        else if (!nodes[command[1].Trim('\"')].child.Any(c => c.key == command[2].Trim('\"')))
+        else if (!nodes[command[1].Trim('\"')].child.Any(c => c == command[2].Trim('\"')))
         {
             Console.WriteLine("There is no in-between to proxy from here.");
             continue;
         }
 
-        nodes[command[1].Trim('\"')].child.RemoveAll(p => p.key == command[2].Trim('\"'));
-        nodes[command[2].Trim('\"')].parent.RemoveAll(p => p.key == command[1].Trim('\"'));
+        nodes[command[1].Trim('\"')].child.RemoveAll(p => p == command[2].Trim('\"'));
+        nodes[command[2].Trim('\"')].parent.RemoveAll(p => p == command[1].Trim('\"'));
 
         nodes.Add(command[3].Trim('\"'), new Node(command[3].Trim('\"')));
         index = command[3].Trim('\"');
@@ -149,8 +149,8 @@ do
 
         foreach (Node node in nodes.Values.ToList())
         {
-            node.parent.RemoveAll(p => p.key == command[1].Trim('\"'));
-            node.child.RemoveAll(c => c.key == command[1].Trim('\"'));
+            node.parent.RemoveAll(p => p == command[1].Trim('\"'));
+            node.child.RemoveAll(c => c == command[1].Trim('\"'));
         }
     }
     else if (string.Equals(command[0], "summarize", StringComparison.OrdinalIgnoreCase))
@@ -159,9 +159,9 @@ do
         {
             if (node.parent.Count == 0 && node.child.Count == 0) Console.WriteLine(node.key);
 
-            foreach (Node child in node.child)
+            foreach (string childKey in node.child)
             {
-                Console.WriteLine($"{node.key} -> {child.key}");
+                Console.WriteLine($"{node.key} -> {childKey}");
             }
         }
     }
@@ -173,14 +173,14 @@ while (!(string.Equals(thought, "close", StringComparison.OrdinalIgnoreCase) ||
 
 static void ParentChildLink(Node parent, Node child)
 {
-    parent.child.Add(child);
-    child.parent.Add(parent);
+    parent.child.Add(child.key);
+    child.parent.Add(parent.key);
 }
 
 public class Node
 {
-    public List<Node> parent; 
-    public List<Node> child;
+    public List<string> parent; 
+    public List<string> child;
     public string key;
     public string value;
 
@@ -188,7 +188,7 @@ public class Node
     {
         this.key = key;
         this.value = string.Empty;
-        this.parent = new List<Node>();
-        this.child = new List<Node>();
+        this.parent = new List<string>();
+        this.child = new List<string>();
     }
 }
