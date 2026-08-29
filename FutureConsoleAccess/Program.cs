@@ -167,6 +167,7 @@ void Proxy(Node parent, Node child, Node proxy)
     ParentChildLink(parent, proxy);
     ParentChildLink(proxy, child);
 }
+
 void Remove(string index)
 {
     nodes.Remove(index);
