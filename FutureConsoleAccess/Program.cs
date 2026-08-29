@@ -38,7 +38,7 @@ do
             continue;
         }
 
-        ParentChildLink(nodes[command[1].Trim('\"')], nodes[command[2].Trim('\"')]);
+        Adopt(nodes[command[1].Trim('\"')], nodes[command[2].Trim('\"')]);
     }
     else if (string.Equals(command[0], "birth", StringComparison.OrdinalIgnoreCase))
     {
@@ -62,8 +62,7 @@ do
             index = command[1].Trim('\"');
         }
 
-        nodes.Add(command[command.Length - 1].Trim('\"'), new Node(command[command.Length - 1].Trim('\"')));
-        ParentChildLink(nodes[index], nodes[command[command.Length - 1].Trim('\"')]);
+        Birth(command[command.Length - 1].Trim('\"'));
     }
     else if (string.Equals(command[0], "create", StringComparison.OrdinalIgnoreCase))
     {
@@ -78,8 +77,7 @@ do
             continue;
         }
 
-        nodes.Add(command[command.Length - 1].Trim('\"'), new Node(command[command.Length - 1].Trim('\"')));
-        index = command[command.Length - 1].Trim('\"');
+        Create(command[command.Length - 1].Trim('\"'));
     }
     else if (string.Equals(command[0], "proxy", StringComparison.OrdinalIgnoreCase))
     {
@@ -101,34 +99,9 @@ do
             continue;
         }
 
-        nodes[command[1].Trim('\"')].child.RemoveAll(p => p == command[2].Trim('\"'));
-        nodes[command[2].Trim('\"')].parent.RemoveAll(p => p == command[1].Trim('\"'));
-
         nodes.Add(command[3].Trim('\"'), new Node(command[3].Trim('\"')));
         index = command[3].Trim('\"');
-
-        ParentChildLink(nodes[command[1].Trim('\"')], nodes[command[3].Trim('\"')]);
-        ParentChildLink(nodes[command[3].Trim('\"')], nodes[command[2].Trim('\"')]);
-    }
-    else if (string.Equals(command[0], "rename", StringComparison.OrdinalIgnoreCase))
-    {
-        if (command.Length != 3 || command[1][0] != '\"' || command[2][0] != '\"')
-        {
-            Console.WriteLine("Please enter a valid command.");
-            continue;
-        } 
-        else if (!nodes.ContainsKey(command[1].Trim('\"')) || nodes.ContainsKey(command[2].Trim('\"')))
-        {
-            Console.WriteLine("Please enter valid indexes.");
-            continue;
-        }
-
-        if (nodes.TryGetValue(command[1].Trim('\"'), out Node? value))
-        {
-            nodes.Remove(command[1].Trim('\"'));
-            nodes.Add(command[2].Trim('\"'), value);
-            if (index == command[1].Trim('\"')) index = command[2].Trim('\"');
-        }
+        Proxy(nodes[command[1].Trim('\"')], nodes[command[2].Trim('\"')], nodes[command[3].Trim('\"')]);
     }
     else if (string.Equals(command[0], "remove", StringComparison.OrdinalIgnoreCase))
     {
@@ -143,33 +116,91 @@ do
             continue;
         }
 
-        nodes.Remove(command[1].Trim('\"'));
-        if (nodes.Count == 0) nodes.Add("[]", new Node("[]"));
-        if (!nodes.ContainsKey(index)) index = nodes.Keys.First();
-
-        foreach (Node node in nodes.Values.ToList())
+        Remove(command[1].Trim('\"'));
+    }
+    else if (string.Equals(command[0], "rename", StringComparison.OrdinalIgnoreCase))
+    {
+        if (command.Length != 3 || command[1][0] != '\"' || command[2][0] != '\"')
         {
-            node.parent.RemoveAll(p => p == command[1].Trim('\"'));
-            node.child.RemoveAll(c => c == command[1].Trim('\"'));
+            Console.WriteLine("Please enter a valid command.");
+            continue;
         }
+        else if (!nodes.ContainsKey(command[1].Trim('\"')) || nodes.ContainsKey(command[2].Trim('\"')))
+        {
+            Console.WriteLine("Please enter valid indexes.");
+            continue;
+        }
+
+        Rename(command[1].Trim('\"'), command[2].Trim('\"'));
     }
     else if (string.Equals(command[0], "summarize", StringComparison.OrdinalIgnoreCase))
     {
-        foreach (Node node in nodes.Values.ToList())
-        {
-            if (node.parent.Count == 0 && node.child.Count == 0) Console.WriteLine(node.key);
-
-            foreach (string childKey in node.child)
-            {
-                Console.WriteLine($"{node.key} -> {childKey}");
-            }
-        }
+        Summarize();
     }
 }
 while (!(string.Equals(thought, "close", StringComparison.OrdinalIgnoreCase) ||
          string.Equals(thought, "end", StringComparison.OrdinalIgnoreCase) ||
          string.Equals(thought, "quit", StringComparison.OrdinalIgnoreCase) ||
          string.Equals(thought, "stop", StringComparison.OrdinalIgnoreCase)));
+
+void Adopt(Node parent, Node child)
+{
+    ParentChildLink(parent, child);
+}
+
+void Birth(string newKey)
+{
+    nodes.Add(newKey, new Node(newKey));
+    ParentChildLink(nodes[index], nodes[newKey]);
+}
+
+void Create(string nodeKey)
+{
+    nodes.Add(nodeKey, new Node(nodeKey));
+    index = nodeKey;
+}
+
+void Proxy(Node parent, Node child, Node proxy)
+{
+    parent.child.RemoveAll(p => p == child.key);
+    child.parent.RemoveAll(p => p == parent.key);
+    ParentChildLink(parent, proxy);
+    ParentChildLink(proxy, child);
+}
+void Remove(string index)
+{
+    nodes.Remove(index);
+    if (nodes.Count == 0) nodes.Add("[]", new Node("[]"));
+    if (!nodes.ContainsKey(index)) index = nodes.Keys.First();
+
+    foreach (Node node in nodes.Values.ToList())
+    {
+        node.parent.RemoveAll(p => p == index);
+        node.child.RemoveAll(c => c == index);
+    }
+}
+
+void Rename(string oldIndex, string newIndex)
+{
+    if (nodes.TryGetValue(oldIndex, out Node? value))
+    {
+        nodes.Remove(oldIndex);
+        nodes.Add(newIndex, value);
+        if (index == oldIndex) index = newIndex;
+    }
+}
+
+void Summarize()
+{
+    foreach (Node node in nodes.Values.ToList())
+    {
+        if (node.parent.Count == 0 && node.child.Count == 0) Console.WriteLine(node.key);
+        foreach (string childKey in node.child)
+        {
+            Console.WriteLine($"{node.key} -> {childKey}");
+        }
+    }
+}
 
 static void ParentChildLink(Node parent, Node child)
 {
