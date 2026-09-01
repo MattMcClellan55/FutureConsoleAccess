@@ -203,7 +203,7 @@ void Summarize()
     }
 }
 
-static void ParentChildLink(Node parent, Node child)
+static void ParentChildLink(Node parent, Node child, string link = "")
 {
     parent.child.Add(child.key);
     child.parent.Add(parent.key);
